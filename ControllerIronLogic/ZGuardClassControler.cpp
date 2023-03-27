@@ -7,9 +7,12 @@
 #include <chrono>
 #include <thread>
 #include <typeinfo>
-
+#include <ctime>
 
 using namespace std;
+
+vector <_ZG_CTR_EVENT> pEventVectorUnkKey;
+vector <_ZG_CTR_EVENT> pEventVectorPassEvent;
 
 	bool readFunc(INT nPos, INT nMax, PVOID pUserData) {
 		//cout <<"{DLLINFO}Текущий шаг выполнения функции." << nPos << endl;
@@ -135,6 +138,33 @@ using namespace std;
 
 	};
 
+	ZGuardClassController::~ZGuardClassController() {
+		//Инициализация		
+		delete oZGL;
+		oZGL = nullptr;
+
+		delete KeyInController;
+		KeyInController = nullptr;
+
+		delete EmptyKeyIndexInController;
+		EmptyKeyIndexInController = nullptr;
+
+		delete _PointCartDto;
+		_PointCartDto = nullptr;
+
+		delete dto;
+		dto = nullptr;
+
+		if (g_hCtr != NULL)
+			ZG_CloseHandle(g_hCtr);
+		if (hCvt != NULL)
+			ZG_CloseHandle(hCvt);
+		if (g_hEvent != NULL)
+			CloseHandle(g_hEvent);
+		ZG_Finalyze();
+		cout << "{DLLINFO} Выполнен деструктор эмулятора\n";
+	};
+
 	void ZGuardClassController::ShowEvents(int nStart, int nCount, dtoThread& dto){
 			_ZG_CTR_EVENT aEvents[6];
 			PZG_CTR_EVENT pEv;
@@ -237,10 +267,22 @@ using namespace std;
 						INT nKeyIdx, nKeyBank;
 						ZG_Ctr_DecodePassEvent(dto.g_hCtr, pEv->aData, &rTime, &nDirect, &nKeyIdx, &nKeyBank);
 
+						//Формируем время текущее
+						std::time_t current_time = std::time(nullptr);
+						std::tm local_time;
+						localtime_s(&local_time, &current_time);
+						stringstream time;
+						time << (local_time.tm_year + 1900) << "-"
+							<< static_cast<int>(rTime.nMonth) << "-"
+							<< static_cast<int>(rTime.nDay) << " "
+							<< static_cast<int>(rTime.nHour) << ":"
+							<< static_cast<int>(rTime.nMinute) << ":"
+							<< static_cast<int>(rTime.nSecond);
+
 						json::object Event{ {
 						{"event",pEv->nType},
 						{"card", readKeyInBufferHex(rNum)},
-						{"time","2015-06-25 16:36:01"},
+						{"time",time.str()},
 						{"flag",0},
 						{"direct",nDirect},// Установим значение в шаге (default)
 
@@ -267,16 +309,27 @@ using namespace std;
 						//Мы нашли ключ в банке пробуем сформировать сообщение
 						if (nKeyIdx >= 0) {
 							if (nKeyIdx <= dto.KeyInController->size()) {
-								//cout << "{DLLINFO} Мы нашли ключ в банке пробуем сформировать сообщение" << endl;
+
 								_ZG_CTR_KEY a = dto.KeyInController->at(nKeyIdx);
-								/*std::cout << "{DLLINFO} ZG_EV_KEY_OPEN/ZG_EV_KEY_ACCESS: " << std::endl;
-								std::cout << "a.rNum => KEY => " << readKeyInBufferHex(a.rNum) << "\n";
-								std::cout << "readKeyInBuffer(a.rNum) => KEY => " << readKeyInBuffer(a.rNum) << "\n";*/
+
+								//Формируем время текущее
+								std::time_t current_time = std::time(nullptr);
+								std::tm local_time;
+								localtime_s(&local_time, &current_time);
+								stringstream time;
+								time << (local_time.tm_year + 1900) << "-"
+									<< static_cast<int>(rTime.nMonth) << "-"
+									<< static_cast<int>(rTime.nDay) << " "
+									<< static_cast<int>(rTime.nHour) << ":"
+									<< static_cast<int>(rTime.nMinute) << ":"
+									<< static_cast<int>(rTime.nSecond);
+
+
 
 								json::object Event{ {
 								{"event",pEv->nType},
 								{"card", readKeyInBufferHex(a.rNum)},
-								{"time","2015-06-25 16:36:01"},
+								{"time",time.str()},
 								{"flag",0},
 								{"direct",nDirect},
 
@@ -384,28 +437,28 @@ using namespace std;
 		return 0;
 	}
 
-	void ZGuardClassController::StartNotifyThread()
-	{
-		if (g_hThread != NULL)
-			return;
-		DWORD nThreadId;
-		g_fThreadActive = TRUE;
-		g_hThread = CreateThread(NULL, 0, staticNotifyThreadProc, (void*)dto, 0, &nThreadId);
-	}
+	//void ZGuardClassController::StartNotifyThread()
+	//{
+	//	if (g_hThread != NULL)
+	//		return;
+	//	DWORD nThreadId;
+	//	g_fThreadActive = TRUE;
+	//	g_hThread = CreateThread(NULL, 0, staticNotifyThreadProc, (void*)dto, 0, &nThreadId);
+	//}
 
-	void ZGuardClassController::StopNotifyThread()
-	{
-		if (g_hThread == NULL)
-			return;
-		g_fThreadActive = FALSE;
-		SetEvent(g_hEvent);
-		WaitForSingleObject(g_hThread, INFINITE);
-		CloseHandle(g_hThread);
-		delete dto;
-		g_hThread = NULL;
-	}
+	//void ZGuardClassController::StopNotifyThread()
+	//{
+	//	if (g_hThread == NULL)
+	//		return;
+	//	g_fThreadActive = FALSE;
+	//	SetEvent(g_hEvent);
+	//	WaitForSingleObject(g_hThread, INFINITE);
+	//	CloseHandle(g_hThread);
+	//	delete dto;
+	//	g_hThread = NULL;
+	//}
 
-	void ZGuardClassController::EnableNotification(BOOL fEnable, BOOL fReport)
+	/*void ZGuardClassController::EnableNotification(BOOL fEnable, BOOL fReport)
 	{
 		if (fEnable)
 		{
@@ -429,7 +482,7 @@ using namespace std;
 		g_fCtrNotifyEnabled = fEnable;
 		if (fReport)
 			_tprintf(TEXT("{DLLINFO} Done.\n"));
-	}
+	}*/
 
 	void ZGuardClassController::SetControllerMode(int mode) {
 		ZG_Ctr_SetCtrMode(g_hCtr, ZG_CTR_MODE(mode));
@@ -611,7 +664,6 @@ using namespace std;
 		return true;
 	}
 
-
 	bool ZGuardClassController::AddCart(std::string stringKeyCart,vector<int> EmptyIndexCart) {
 		UpdateBankKey(0);
 
@@ -711,8 +763,6 @@ using namespace std;
 		}
 	}
 
-
-
 	void ZGuardClassController::DoRestoreFactorySettings()
 	{
 		_tprintf(TEXT("{DLLINFO} Writing (0, 0)...\n"));
@@ -781,9 +831,19 @@ using namespace std;
 		rOp.nType = CvtPortType;
 		rOp.pszName = CvtPortName;
 		rOp.nSpeed = ZG_SPEED_57600;
-		if (!CheckZGError(ZG_Cvt_Open(&hCvt, &rOp, NULL), _T("ZG_Cvt_Open")))
+		if (!CheckZGError(ZG_Cvt_Open(&hCvt, &rOp, NULL), _T("ZG_Cvt_Open")))			
 			return false;
 		return true;
+	}
+
+	void ZGuardClassController::ChangeMode(int Mode) {
+		ZG_CTR_MODE ControlerMode = static_cast<ZG_CTR_MODE>(Mode);
+		cout << "{DLLINFO} Должен был быть установлен режим на: =" << Mode << '\n';
+		ZG_Ctr_SetCtrMode(g_hCtr, ControlerMode);
+		ZG_CTR_MODE pCurrMode;
+		DWORD pFlags;
+		ZG_Ctr_GetCtrModeInfo(g_hCtr, &pCurrMode, &pFlags);
+		cout << "{DLLINFO} Сменен режим на: =" << pCurrMode<<'\n';
 	}
 
 	void ZGuardClassController::ChangeContext(int _CtrAddr)
@@ -929,28 +989,7 @@ using namespace std;
 		return nWrIdx;
 	}
 
-	/*
-	void ZGuardClassControler::DoShowAllEvents()
-	{
-		INT nWrIdx;
-		if (!CheckZGError(ZG_Ctr_ReadEventIdxs(g_hCtr, &nWrIdx, NULL), _T("ZG_Ctr_ReadEventIdxs")))
-			return;
-		INT nIdx, nTotalCount, nShowCount;
-
-		nIdx = nWrIdx;
-		nTotalCount = g_nCtrMaxEvents;
-		while (nTotalCount > 0)
-		{
-			std::cout << "Осталось прочитать событий: " << nTotalCount << std::endl;
-			nShowCount = min(nTotalCount, 100);
-			ShowEvents(nIdx, nShowCount,*dto);
-			nTotalCount -= nShowCount;
-			nIdx = (nIdx + nShowCount) % g_nCtrMaxEvents;
-		}
-		_tprintf(TEXT("{DLLINFO} Все событие из контролера считанны.\n"));
-	}
-	*/
-
+	
 	/*
 	Idx			Позиция текущего события.
 	Event		Параметры события.
@@ -958,8 +997,6 @@ using namespace std;
 	Max			Всего количество шагов.
 	UserData	Параметр пользователя для Callback - функции.
 	*/
-	vector <_ZG_CTR_EVENT> pEventVectorUnkKey;
-	vector <_ZG_CTR_EVENT> pEventVectorPassEvent;
 
 	BOOL fnEnumProc(INT nIdx, PZG_CTR_EVENT pEvent, INT nPos, INT nMax, PVOID pUserData)
 	{
@@ -1015,4 +1052,13 @@ using namespace std;
 		getCard();
 		clock_t t1 = clock();
 		cout << "time: " << (double)(t1 - t0) / CLOCKS_PER_SEC << endl;
+	}
+
+	void ZGuardClassController::SetClock(PZG_CTR_CLOCK pClock) {
+
+		if (!CheckZGError(ZG_Ctr_SetClock(g_hCtr, pClock), _T("ZG_Ctr_SetClock"))) {
+			cout << "{DLLINFO} Не удалось синхронезировате время на контролере: "<< rCtrInfo.nSn <<"\n";
+			return;
+		}
+		
 	}

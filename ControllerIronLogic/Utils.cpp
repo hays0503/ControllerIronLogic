@@ -53,7 +53,8 @@ LPCTSTR KeyTypeStrs[] = {
 BOOL CheckZGError(HRESULT nStatus, LPCTSTR pszContext)
 {
 	if (SUCCEEDED(nStatus))
-		return TRUE;
+		return TRUE;	
+	cout << "{DLLINFO}Ошибка / код ошибки: " << std::hex << nStatus << endl;
 	LPTSTR pBuffer = NULL;
 	FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER | ((HRESULT_FACILITY(nStatus) == 4) ? FORMAT_MESSAGE_FROM_HMODULE : FORMAT_MESSAGE_FROM_SYSTEM),

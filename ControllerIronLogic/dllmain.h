@@ -24,6 +24,32 @@ extern "C" CONTROLLERIRONLOGIC_EXPORTS bool DllInitConverter(char* PortName) {
 };
 
 //New
+//Деструктор конвертер
+extern "C" CONTROLLERIRONLOGIC_EXPORTS void DllDestructorConverter() {
+
+	delete Controler;
+	Controler = nullptr;
+	cout << "{DLLINFO} Вызван деструктор эмулятора\n";
+};
+
+//New
+//Сменить активный контролер
+extern "C" CONTROLLERIRONLOGIC_EXPORTS bool DllModeController(int Mode) {
+#ifdef profiling
+	clock_t t0 = clock();
+#endif		
+	Controler->ChangeMode(Mode);
+	//cout << "!!!!!!!!!!!!!!DllModeController = " << DllModeController << "!!!!!!!!!!!!!!!!!!!!!!!!";
+#ifdef profiling
+	clock_t t1 = clock();
+	cout << "DllModeController time: " << (double)(t1 - t0) / CLOCKS_PER_SEC << endl;
+#endif
+
+	return true;
+};
+
+
+//New
 //Сменить активный контролер
 extern "C" CONTROLLERIRONLOGIC_EXPORTS bool DllChangeContextController(int indexController) {
 	#ifdef profiling
@@ -261,6 +287,20 @@ extern "C" CONTROLLERIRONLOGIC_EXPORTS int  DllDoCtrEventsMenu(int _CtrAddr, int
 	cout << "DllDoCtrEventsMenu time: " << (double)(t1 - t0) / CLOCKS_PER_SEC << endl;
 #endif
 	return res;
+};
+
+//New
+//Синхронизировать время
+extern "C" CONTROLLERIRONLOGIC_EXPORTS void DllSetTime(int nYear, int nMonth,int nDay,int nHour,int nMinute, int nSecond){
+#ifdef profiling
+	clock_t t0 = clock();
+#endif
+	_ZG_CTR_CLOCK Clock = { false,nYear,nMonth,nDay,nHour,nMinute,nSecond };
+	Controler->SetClock(&Clock);
+#ifdef profiling
+	clock_t t1 = clock();
+	cout << "DllSetTime time: " << (double)(t1 - t0) / CLOCKS_PER_SEC << endl;
+#endif
 };
 
 //OLD

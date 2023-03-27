@@ -120,6 +120,13 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>D:\boost_1_81_0\boost;D:\boost_1_81_0\libs;D:\boost_1_81_0\lib64-msvc-14.3;D:\boost_1_81_0;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>del /Q  "$(SolutionDir)$(PlatformTargetAsMSBuildArchitecture)\$(Configuration)\dll\$(TargetName).dll"
+del /Q  "$(SolutionDir)$(PlatformTargetAsMSBuildArchitecture)\$(Configuration)\lib\$(TargetName).dll"  
+ 
+copy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)$(PlatformTargetAsMSBuildArchitecture)\$(Configuration)\dll\$(TargetName).dll"
+copy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)$(PlatformTargetAsMSBuildArchitecture)\$(Configuration)\lib\$(TargetName).dll"  </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -141,6 +148,13 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>D:\boost_1_81_0\boost;D:\boost_1_81_0\libs;D:\boost_1_81_0\lib64-msvc-14.3;D:\boost_1_81_0;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>del /Q  "$(SolutionDir)$(PlatformTargetAsMSBuildArchitecture)\$(Configuration)\dll\$(TargetName).dll"
+del /Q  "$(SolutionDir)$(PlatformTargetAsMSBuildArchitecture)\$(Configuration)\lib\$(TargetName).dll"  
+ 
+copy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)$(PlatformTargetAsMSBuildArchitecture)\$(Configuration)\dll\$(TargetName).dll"
+copy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)$(PlatformTargetAsMSBuildArchitecture)\$(Configuration)\lib\$(TargetName).dll"  </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AllHeader.h" />
